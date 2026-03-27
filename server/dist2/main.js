@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
+const core_1 = require("@nestjs/core");
+const common_1 = require("@nestjs/common");
+const app_module_1 = require("./app.module");
+async function bootstrap() {
+    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.enableCors({
+        origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8080'],
+        credentials: true,
+    });
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        transform: true,
+    }));
+    app.setGlobalPrefix('api');
+    await app.listen(3000);
+    console.log('Server running on http://localhost:3000');
+}
+bootstrap();
+//# sourceMappingURL=main.js.map

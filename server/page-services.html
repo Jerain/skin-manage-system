@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务项目 - 皮肤管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; }
+        .header { background: #667eea; color: white; padding: 20px; text-align: center; position: relative; }
+        .header h1 { font-size: 18px; }
+        .back { position: absolute; left: 15px; top: 18px; color: white; text-decoration: none; }
+        .list { padding: 15px; }
+        .service-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; }
+        .service-icon { width: 80px; height: 80px; background: #f0f0f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+        .service-info { flex: 1; margin-left: 15px; }
+        .service-name { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        .service-desc { color: #666; font-size: 12px; margin-bottom: 8px; }
+        .service-price { color: #ff6b00; font-size: 18px; font-weight: bold; }
+        .service-btn { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="client.html" class="back">← 返回</a>
+        <h1>💆 服务项目</h1>
+    </div>
+    <div class="list" id="serviceList">
+        <p style="text-align:center;padding:20px;">加载中...</p>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        async function loadServices() {
+            try {
+                const res = await fetch(`${API_BASE}/services`);
+                const data = await res.json();
+                const list = data.data?.list || data.data || [];
+                
+                if (list.length === 0) {
+                    const services = [
+                        { id: 1, name: '面部深层清洁', price: 198, desc: '深层清洁毛孔，去除黑头' },
+                        { id: 2, name: '补水护理', price: 268, desc: '玻尿酸深层补水' },
+                        { id: 3, name: '祛斑美白', price: 398, desc: '激光祛斑，美白嫩肤' },
+                        { id: 4, name: '抗衰紧致', price: 568, desc: '射频抗衰，提升紧致' }
+                    ];
+                    renderServices(services);
+                } else {
+                    renderServices(list);
+                }
+            } catch(e) {
+                document.getElementById('serviceList').innerHTML = '<p style="text-align:center;padding:20px;">加载失败</p>';
+            }
+        }
+        
+        function renderServices(services) {
+            const icons = ['💆', '🧴', '✨', '🎀'];
+            document.getElementById('serviceList').innerHTML = services.map((s, i) => `
+                <div class="service-card">
+                    <div class="service-icon">${icons[i % icons.length]}</div>
+                    <div class="service-info">
+                        <div class="service-name">${s.name}</div>
+                        <div class="service-desc">${s.desc || s.description || '专业美容服务'}</div>
+                        <div class="service-price">¥${s.price}</div>
+                        <button class="service-btn" onclick="bookService(${s.id}, '${s.name}')">立即预约</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function bookService(id, name) {
+            alert('预约 ' + name + ' - 功能开发中');
+        }
+        
+        loadServices();
+    </script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>皮肤管理系统 - 门店端</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #34C759 0%, #30b350 100%);
+            min-height: 100vh;
+            color: #333;
+            padding-bottom: 70px;
+        }
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 22px; color: #333; }
+        .user-info {
+            background: rgba(255,255,255,0.95);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px;
+            border-radius: 12px;
+        }
+        .user-info .name { font-weight: bold; }
+        .user-info .position { color: #34C759; font-size: 14px; }
+        
+        /* AI助手入口 */
+        .ai-entry {
+            margin: 15px;
+            background: linear-gradient(135deg, #34C759 0%, #30b350 100%);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+        }
+        .ai-entry:active { transform: scale(0.98); }
+        .ai-avatar {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            animation: breathe 3s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .ai-info { flex: 1; color: white; }
+        .ai-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        .ai-desc { font-size: 13px; opacity: 0.9; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 15px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .card:active { transform: scale(0.96); }
+        .card-icon { font-size: 36px; margin-bottom: 10px; }
+        .card-title { font-size: 16px; font-weight: 600; }
+        .card-desc { font-size: 12px; color: #888; margin-top: 5px; }
+        
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .nav-item.active { color: #34C759; }
+        .nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+        
+        .stats-row {
+            display: flex;
+            gap: 10px;
+            padding: 0 15px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value { font-size: 24px; font-weight: bold; color: #34C759; }
+        .stat-label { font-size: 12px; color: #888; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏪 门店管理系统</h1>
+    </div>
+    
+    <div class="user-info">
+        <span class="name" id="userName">员工</span>
+        <span class="position" id="userPosition">技师</span>
+    </div>
+    
+    <!-- AI助手入口 -->
+    <div class="ai-entry" onclick="location.href='ai-assistant-store.html'">
+        <div class="ai-avatar">🤖</div>
+        <div class="ai-info">
+            <div class="ai-title">🎙️ AI 助手</div>
+            <div class="ai-desc">语音控制门店系统</div>
+        </div>
+    </div>
+    
+    <!-- 今日数据 -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value" id="todayAppointment">0</div>
+            <div class="stat-label">今日预约</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="todayCustomer">0</div>
+            <div class="stat-label">服务客户</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="todayIncome">¥0</div>
+            <div class="stat-label">今日收入</div>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="card" onclick="location.href='store-appointments.html'">
+            <div class="card-icon">📅</div>
+            <div class="card-title">预约管理</div>
+            <div class="card-desc">查看/处理预约</div>
+        </div>
+        
+        <div class="card" onclick="location.href='store-customers.html'">
+            <div class="card-icon">👥</div>
+            <div class="card-title">客户管理</div>
+            <div class="card-desc">客户档案</div>
+        </div>
+        
+        <div class="card" onclick="location.href='store-attendance.html'">
+            <div class="card-icon">✅</div>
+            <div class="card-title">考勤打卡</div>
+            <div class="card-desc">上班/下班</div>
+        </div>
+        
+        <div class="card" onclick="location.href='store-performance.html'">
+            <div class="card-icon">📊</div>
+            <div class="card-title">业绩查询</div>
+            <div class="card-desc">个人业绩</div>
+        </div>
+        
+        <div class="card" onclick="location.href='store-employees.html'">
+            <div class="card-icon">👨‍💼</div>
+            <div class="card-title">员工管理</div>
+            <div class="card-desc">员工档案</div>
+        </div>
+        
+        <div class="card" onclick="location.href='store-data.html'">
+            <div class="card-icon">📈</div>
+            <div class="card-title">数据看板</div>
+            <div class="card-desc">门店数据</div>
+        </div>
+    </div>
+    
+    <div class="nav">
+        <div class="nav-item active" onclick="location.href='store.html'">
+            <span class="nav-icon">🏠</span>
+            首页
+        </div>
+        <div class="nav-item" onclick="location.href='ai-assistant-store.html'">
+            <span class="nav-icon">🤖</span>
+            AI助手
+        </div>
+        <div class="nav-item" onclick="location.href='store-performance.html'">
+            <span class="nav-icon">📊</span>
+            业绩
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        // 获取员工信息
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                document.getElementById('userName').textContent = user.name || '员工';
+                document.getElementById('userPosition').textContent = user.position || '技师';
+            } catch(e) {}
+        }
+        
+        // 加载今日数据
+        async function loadTodayData() {
+            try {
+                // 今日预约
+                const today = new Date().toISOString().split('T')[0];
+                const apptRes = await fetch(`${API_BASE}/appointments?date=${today}`);
+                const apptData = await apptRes.json();
+                const apptList = apptData.data?.list || apptData.data || [];
+                document.getElementById('todayAppointment').textContent = apptList.length;
+                document.getElementById('todayCustomer').textContent = apptList.filter(a => a.status === 'completed').length;
+            } catch(e) {
+                console.log('数据加载中...');
+            }
+        }
+        
+        loadTodayData();
+    </script>
+</body>
+</html>

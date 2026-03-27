@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>员工管理 - 门店端</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; }
+        .header { background: #34C759; color: white; padding: 20px; text-align: center; position: relative; }
+        .back { position: absolute; left: 15px; top: 18px; color: white; text-decoration: none; }
+        .add-btn { position: absolute; right: 15px; top: 18px; color: white; text-decoration: none; font-size: 14px; }
+        .list { padding: 15px; }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .avatar { width: 50px; height: 50px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .info { flex: 1; }
+        .name { font-weight: bold; font-size: 16px; }
+        .position { color: #34C759; font-size: 13px; margin-top: 3px; }
+        .phone { color: #888; font-size: 12px; margin-top: 3px; }
+        .status { padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        .status-active { background: #e8f5e9; color: #4caf50; }
+        .status-inactive { background: #ffebee; color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="store.html" class="back">← 返回</a>
+        <h1>👨‍💼 员工管理</h1>
+        <a href="#" class="add-btn">+ 添加</a>
+    </div>
+    <div class="list" id="employeeList">
+        <p style="text-align:center;padding:20px;color:#888;">加载中...</p>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        async function loadEmployees() {
+            try {
+                const res = await fetch(`${API_BASE}/employees`);
+                const data = await res.json();
+                const list = data.data?.list || data.data || [];
+                renderEmployees(list);
+            } catch(e) {
+                // 模拟数据
+                const mockData = [
+                    { id: 1, name: '张三', phone: '13800138001', position: '技师', status: 1 },
+                    { id: 2, name: '李四', phone: '13800138002', position: '高级技师', status: 1 },
+                    { id: 3, name: '王五', phone: '13800138003', position: '店长', status: 1 },
+                    { id: 4, name: '赵六', phone: '13800138004', position: '技师', status: 0 },
+                ];
+                renderEmployees(mockData);
+            }
+        }
+        
+        function renderEmployees(list) {
+            if (!list.length) {
+                document.getElementById('employeeList').innerHTML = '<p style="text-align:center;padding:20px;color:#888;">暂无员工</p>';
+                return;
+            }
+            document.getElementById('employeeList').innerHTML = list.map(e => `
+                <div class="card">
+                    <div class="avatar">👤</div>
+                    <div class="info">
+                        <div class="name">${e.name}</div>
+                        <div class="position">${e.position || '技师'}</div>
+                        <div class="phone">📱 ${e.phone}</div>
+                    </div>
+                    <span class="status ${e.status === 1 ? 'status-active' : 'status-inactive'}">${e.status === 1 ? '在职' : '离职'}</span>
+                </div>
+            `).join('');
+        }
+        
+        loadEmployees();
+    </script>
+</body>
+</html>

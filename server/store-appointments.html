@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预约管理 - 门店端</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; }
+        .header { background: #34C759; color: white; padding: 20px; text-align: center; position: relative; }
+        .header h1 { font-size: 18px; }
+        .back { position: absolute; left: 15px; top: 18px; color: white; text-decoration: none; }
+        .tabs { display: flex; background: white; margin: 10px; border-radius: 10px; overflow: hidden; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab.active { color: #34C759; border-bottom-color: #34C759; }
+        .list { padding: 10px; }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .card-name { font-weight: bold; font-size: 16px; }
+        .card-status { padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        .status-pending { background: #fff3e0; color: #ff9800; }
+        .status-completed { background: #e8f5e9; color: #4caf50; }
+        .status-cancelled { background: #ffebee; color: #f44336; }
+        .card-info { color: #666; font-size: 14px; margin: 5px 0; }
+        .card-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #34C759; color: white; }
+        .btn-secondary { background: #f0f0f0; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="store.html" class="back">← 返回</a>
+        <h1>📅 预约管理</h1>
+    </div>
+    <div class="tabs">
+        <div class="tab active" onclick="filterAppointments('all')">全部</div>
+        <div class="tab" onclick="filterAppointments('pending')">待服务</div>
+        <div class="tab" onclick="filterAppointments('completed')">已完成</div>
+    </div>
+    <div class="list" id="appointmentList">
+        <p style="text-align:center;padding:20px;">加载中...</p>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let appointments = [];
+        let currentStoreId = 1;
+        
+        async function loadAppointments() {
+            try {
+                // 获取URL参数中的门店ID
+                const urlParams = new URLSearchParams(window.location.search);
+                currentStoreId = parseInt(urlParams.get('storeId')) || 1;
+                
+                const res = await fetch(`${API_BASE}/appointments?storeId=${currentStoreId}`);
+                const data = await res.json();
+                appointments = data.data?.list || data.data || [];
+                renderAppointments(appointments);
+            } catch(e) {
+                // 使用模拟数据
+                appointments = [
+                    { id: 1, customerName: '张三', serviceName: '深层补水', employeeName: '李四', time: '10:00', status: 'pending' },
+                    { id: 2, customerName: '李四', serviceName: '光子嫩肤', employeeName: '王五', time: '14:00', status: 'completed' },
+                ];
+                renderAppointments(appointments);
+            }
+        }
+        
+        function renderAppointments(list) {
+            if (!list.length) {
+                document.getElementById('appointmentList').innerHTML = '<p style="text-align:center;padding:20px;">暂无预约</p>';
+                return;
+            }
+            
+            document.getElementById('appointmentList').innerHTML = list.map(a => `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-name">${a.customerName || a.customer?.name || '客户'}</span>
+                        <span class="card-status status-${a.status}">${a.status === 'pending' ? '待服务' : a.status === 'completed' ? '已完成' : '已取消'}</span>
+                    </div>
+                    <div class="card-info">📅 ${a.time || a.appointmentTime || '待确定'}</div>
+                    <div class="card-info">💆 ${a.serviceName || a.service?.name || '服务项目'}</div>
+                    <div class="card-info">👤 技师: ${a.employeeName || a.employee?.name || '待分配'}</div>
+                    <div class="card-actions">
+                        ${a.status === 'pending' ? '<button class="btn btn-primary" onclick="completeAppointment(' + a.id + ')">完成服务</button>' : ''}
+                        <button class="btn btn-secondary" onclick="alert('详情开发中')">详情</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterAppointments(status) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (status === 'all') {
+                renderAppointments(appointments);
+            } else {
+                renderAppointments(appointments.filter(a => a.status === status));
+            }
+        }
+        
+        function completeAppointment(id) {
+            alert('完成预约 #' + id + ' - 功能开发中');
+        }
+        
+        loadAppointments();
+    </script>
+</body>
+</html>
