@@ -90,7 +90,13 @@ export const api = {
   
   // Customer
   getCustomerInfo: () => request({ url: '/customers/info' }),
-  updateCustomer: (data: any) => request({ url: '/customers/update', method: 'PUT', data })
+  updateCustomer: (data: any) => request({ url: '/customers/update', method: 'PUT', data }),
+  
+  // Care Plans
+  getCarePlans: () => request({ url: '/care-plans' }),
+  getCarePlan: (id: number) => request({ url: `/care-plans/${id}` }),
+  createCarePlan: (data: any) => request({ url: '/care-plans', method: 'POST', data }),
+  updateCarePlanItem: (itemId: number, data: any) => request({ url: `/care-plans/items/${itemId}`, method: 'PUT', data })
 }
 
 export default api

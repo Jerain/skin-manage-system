@@ -47,6 +47,12 @@
       "style": {
         "navigationBarTitleText": "个人中心"
       }
+    },
+    {
+      "path": "pages/care-plan/index",
+      "style": {
+        "navigationBarTitleText": "护理计划"
+      }
     }
   ],
   "globalStyle": {

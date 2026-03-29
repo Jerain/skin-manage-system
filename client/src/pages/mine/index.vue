@@ -68,6 +68,14 @@
         <u-icon name="arrow-right" size="16" color="#999" />
       </view>
       
+      <view class="menu-item" @click="goToCarePlan">
+        <view class="menu-left">
+          <u-icon name="clipboard-list" size="22" color="#67C23A" />
+          <text class="menu-text">护理计划</text>
+        </view>
+        <u-icon name="arrow-right" size="16" color="#999" />
+      </view>
+      
       <view class="menu-item" @click="editProfile">
         <view class="menu-left">
           <u-icon name="edit-pen" size="22" />
@@ -120,6 +128,10 @@ const showRechargeDialog = () => {
 
 const showMemberCards = () => {
   uni.showToast({ title: '卡项功能开发中', icon: 'none' })
+}
+
+const goToCarePlan = () => {
+  uni.navigateTo({ url: '/pages/care-plan/index' })
 }
 
 const editProfile = () => {
