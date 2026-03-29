@@ -53,6 +53,12 @@
       "style": {
         "navigationBarTitleText": "护理计划"
       }
+    },
+    {
+      "path": "pages/membership/index",
+      "style": {
+        "navigationBarTitleText": "会员中心"
+      }
     }
   ],
   "globalStyle": {

@@ -76,6 +76,14 @@
         <u-icon name="arrow-right" size="16" color="#999" />
       </view>
       
+      <view class="menu-item" @click="goToMembership">
+        <view class="menu-left">
+          <u-icon name="star" size="22" color="#E6A23C" />
+          <text class="menu-text">会员中心</text>
+        </view>
+        <u-icon name="arrow-right" size="16" color="#999" />
+      </view>
+      
       <view class="menu-item" @click="editProfile">
         <view class="menu-left">
           <u-icon name="edit-pen" size="22" />
@@ -132,6 +140,10 @@ const showMemberCards = () => {
 
 const goToCarePlan = () => {
   uni.navigateTo({ url: '/pages/care-plan/index' })
+}
+
+const goToMembership = () => {
+  uni.navigateTo({ url: '/pages/membership/index' })
 }
 
 const editProfile = () => {
