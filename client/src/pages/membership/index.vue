@@ -1,104 +1,107 @@
 <template>
   <view class="membership-page">
-    <!-- Member Card -->
-    <view class="member-card">
-      <view class="card-bg">
-        <view class="member-info">
-          <u-avatar :src="customerInfo?.avatar" size="100" />
-          <view class="info-text">
-            <text class="member-name">{{ customerInfo?.name || '会员' }}</text>
-            <text class="member-level">{{ getLevelName(customerInfo?.level) }}</text>
+    <!-- Header -->
+    <view class="page-header">
+      <view class="level-badge">
+        <text class="level-name">{{ currentLevel?.name || '普通会员' }}</text>
+        <text class="level-icon">👑</text>
+      </view>
+      <view class="level-info">
+        <text class="level-title">{{ currentLevel?.name || 'LV1' }}</text>
+        <view class="level-progress">
+          <view class="progress-bar">
+            <view class="progress-fill" :style="{ width: levelProgress + '%' }"></view>
           </view>
-        </view>
-        <view class="card-stats">
-          <view class="stat-item">
-            <text class="stat-value">{{ formatMoney(customerInfo?.balance) }}</text>
-            <text class="stat-label">余额</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{ customerInfo?.points || 0 }}</text>
-            <text class="stat-label">积分</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{ growthValue || 0 }}</text>
-            <text class="stat-label">成长值</text>
-          </view>
+          <text class="progress-text">{{ growthValue }}/{{ nextLevel?.requiredValue || currentLevel?.requiredValue || 1000 }} 成长值</text>
         </view>
       </view>
     </view>
 
-    <!-- Level Progress -->
-    <view class="level-progress">
-      <view class="progress-header">
-        <text class="title">等级成长</text>
-        <text class="subtitle">再积累 {{ nextLevelPoints - (growthValue % 1000) }} 成长值可升至 {{ getLevelName(nextLevel) }}</text>
-      </view>
-      <view class="level-track">
-        <view 
-          v-for="level in levels" 
-          :key="level.value" 
-          class="level-dot"
-          :class="{ active: currentLevel >= level.value, current: currentLevel === level.value }"
-        >
-          <view class="dot"></view>
-          <text class="level-name">{{ level.name }}</text>
-        </view>
-      </view>
-      <view class="progress-bar">
-        <view class="progress-fill" :style="{ width: progressPercent + '%' }"></view>
-      </view>
-    </view>
-
-    <!-- Benefits -->
-    <view class="benefits-section">
-      <text class="section-title">会员权益</text>
+    <!-- Benefits Card -->
+    <view class="benefits-card">
+      <text class="card-title">会员权益</text>
       <view class="benefits-list">
-        <view v-for="benefit in currentBenefits" :key="benefit.id" class="benefit-item">
-          <u-icon :name="benefit.icon || 'checkmark-circle'" size="40" :color="benefit.color || '#67C23A'" />
-          <view class="benefit-info">
-            <text class="benefit-name">{{ benefit.name }}</text>
-            <text class="benefit-desc">{{ benefit.description }}</text>
+        <view v-for="benefit in currentLevel?.benefits || defaultBenefits" :key="benefit" class="benefit-item">
+          <u-icon name="checkmark-circle" size="18" color="#67C23A" />
+          <text>{{ benefit }}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Level List -->
+    <view class="levels-card">
+      <text class="card-title">会员等级</text>
+      <view class="level-list">
+        <view 
+          v-for="level in allLevels" 
+          :key="level.id" 
+          class="level-item"
+          :class="{ active: level.id <= userInfo.level, locked: level.id > userInfo.level }"
+        >
+          <view class="level-icon-wrapper">
+            <text class="level-emoji">{{ level.icon || '🌟' }}</text>
+          </view>
+          <view class="level-info-text">
+            <text class="level-name">{{ level.name }}</text>
+            <text class="level-requirement">需 {{ level.requiredValue }} 成长值</text>
+          </view>
+          <view class="level-status">
+            <u-icon v-if="level.id < userInfo.level" name="check-circle" size="20" color="#67C23A" />
+            <text v-else-if="level.id === userInfo.level" class="current-tag">当前</text>
+            <u-icon v-else name="lock" size="20" color="#999" />
           </view>
         </view>
-        <view v-if="!currentBenefits.length" class="empty-benefits">
-          <text>暂无专属权益</text>
+      </view>
+    </view>
+
+    <!-- Growth Tips -->
+    <view class="tips-card">
+      <text class="card-title">成长攻略</text>
+      <view class="tip-item">
+        <text class="tip-icon">📅</text>
+        <view class="tip-content">
+          <text class="tip-title">完善个人资料</text>
+          <text class="tip-desc">完善信息 +50 成长值</text>
+        </view>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">🛒</text>
+        <view class="tip-content">
+          <text class="tip-title">消费得积分</text>
+          <text class="tip-desc">每消费1元 +1 成长值</text>
+        </view>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">⭐</text>
+        <view class="tip-content">
+          <text class="tip-title">完成护理计划</text>
+          <text class="tip-desc">完成计划 +100 成长值</text>
+        </view>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">🎁</text>
+        <view class="tip-content">
+          <text class="tip-title">邀请好友</text>
+          <text class="tip-desc">每邀请1人 +200 成长值</text>
         </view>
       </view>
     </view>
 
     <!-- Growth History -->
-    <view class="history-section">
-      <text class="section-title">成长记录</text>
+    <view class="history-card">
+      <text class="card-title">成长记录</text>
       <view class="history-list">
         <view v-for="record in growthHistory" :key="record.id" class="history-item">
-          <view class="history-left">
-            <text class="history-type">{{ record.type }}</text>
-            <text class="history-date">{{ record.date }}</text>
+          <view class="history-icon">
+            <text>{{ record.icon }}</text>
           </view>
-          <text class="history-value" :class="record.action">+{{ record.value }}</text>
+          <view class="history-info">
+            <text class="history-title">{{ record.action }}</text>
+            <text class="history-time">{{ record.time }}</text>
+          </view>
+          <text class="history-value" :class="record.type">+{{ record.value }}</text>
         </view>
-        <view v-if="!growthHistory.length" class="empty-history">
-          <text>暂无记录</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- Upgrade Tips -->
-    <view class="upgrade-tips" v-if="currentLevel < 5">
-      <text class="tips-title">升级攻略</text>
-      <view class="tips-list">
-        <view class="tip-item">
-          <u-icon name="shopping-cart" size="32" color="#409EFF" />
-          <text>每消费1元可获得1成长值</text>
-        </view>
-        <view class="tip-item">
-          <u-icon name="checkmark-circle" size="32" color="#67C23A" />
-          <text>完成护理计划可获得额外成长值</text>
-        </view>
-        <view class="tip-item">
-          <u-icon name="star" size="32" color="#E6A23C" />
-          <text>评价服务可获得积分奖励</text>
-        </view>
+        <view v-if="!growthHistory.length" class="empty-tip">暂无记录</view>
       </view>
     </view>
   </view>
@@ -110,79 +113,38 @@ import { useStore } from '@/stores'
 import api from '@/utils/api'
 
 const store = useStore()
-const customerInfo = computed(() => store.customerInfo)
-const growthValue = ref(850)
-const growthHistory = ref<any[]>([])
+const userInfo = computed(() => store.userInfo || {})
 
-const levels = [
-  { value: 1, name: '普通会员' },
-  { value: 2, name: '银卡' },
-  { value: 3, name: '金卡' },
-  { value: 4, name: '白金卡' },
-  { value: 5, name: '钻石卡' }
-]
+const allLevels = ref([
+  { id: 1, name: '普通会员', icon: '🌟', requiredValue: 0, benefits: ['基础折扣 5%', '生日礼遇'] },
+  { id: 2, name: '银卡会员', icon: '🌙', requiredValue: 1000, benefits: ['基础折扣 8%', '生日礼遇', '优先预约'] },
+  { id: 3, name: '金卡会员', icon: '☀️', requiredValue: 5000, benefits: ['基础折扣 12%', '专属顾问', '免费护理'] },
+  { id: 4, name: '黑金会员', icon: '💎', requiredValue: 20000, benefits: ['基础折扣 18%', 'VIP护理室', '专属定制'] },
+  { id: 5, name: '钻石会员', icon: '👑', requiredValue: 50000, benefits: ['专属服务', '全年免费护理', '私人定制方案'] }
+])
 
-const currentLevel = computed(() => customerInfo.value?.level || 1)
-const nextLevel = computed(() => Math.min(currentLevel.value + 1, 5))
-const nextLevelPoints = computed(() => nextLevel.value * 1000)
+const defaultBenefits = ['基础折扣 5%', '生日礼遇']
 
-const progressPercent = computed(() => {
-  return (growthValue.value % 1000) / 10
+const currentLevel = computed(() => allLevels.value.find(l => l.id === userInfo.value.level) || allLevels.value[0])
+const nextLevel = computed(() => allLevels.value.find(l => l.id === userInfo.value.level + 1))
+
+const growthValue = computed(() => userInfo.value.growthValue || 800)
+const levelProgress = computed(() => {
+  const current = currentLevel.value?.requiredValue || 0
+  const next = nextLevel.value?.requiredValue || currentLevel.value?.requiredValue + 1000
+  const progress = ((growthValue.value - current) / (next - current)) * 100
+  return Math.min(Math.max(progress, 0), 100)
 })
 
-const getLevelName = (level?: number) => {
-  const map: Record<number, string> = {
-    1: '普通会员', 2: '银卡会员', 3: '金卡会员', 4: '白金卡', 5: '钻石卡'
-  }
-  return map[level || 1] || '普通会员'
-}
-
-const currentBenefits = computed(() => {
-  const benefits: Record<number, any[]> = {
-    1: [{ id: 1, name: '新人礼遇', description: '首次消费享9折', icon: 'gift', color: '#F56C6C' }],
-    2: [
-      { id: 1, name: '9.5折优惠', description: '全场服务9.5折', icon: '票', color: '#409EFF' },
-      { id: 2, name: '积分加倍', description: '消费积分翻倍', icon: 'star', color: '#E6A23C' }
-    ],
-    3: [
-      { id: 1, name: '9折优惠', description: '全场服务9折', icon: '票', color: '#409EFF' },
-      { id: 2, name: '专属护理', description: '每月免费护理一次', icon: 'heart', color: '#F56C6C' },
-      { id: 3, name: '优先预约', description: '预约优先权', icon: 'clock', color: '#67C23A' }
-    ],
-    4: [
-      { id: 1, name: '8.8折优惠', description: '全场服务8.8折', icon: '票', color: '#409EFF' },
-      { id: 2, name: '免费护理', description: '每月2次免费护理', icon: 'heart', color: '#F56C6C' },
-      { id: 3, name: '专属技师', description: '指定高级技师服务', icon: 'user', color: '#909399' },
-      { id: 4, name: '生日礼包', description: '生日当月双倍积分', icon: 'gift', color: '#F56C6C' }
-    ],
-    5: [
-      { id: 1, name: '8折优惠', description: '全场服务8折', icon: '票', color: '#409EFF' },
-      { id: 2, name: '专属顾问', description: '1对1美丽顾问', icon: 'user', color: '#909399' },
-      { id: 3, name: '免费护理', description: '每月4次免费护理', icon: 'heart', color: '#F56C6C' },
-      { id: 4, name: 'VIP通道', description: '免排队优先服务', icon: 'arrow-right', color: '#67C23A' },
-      { id: 5, name: '私人定制', description: '专属护理方案', icon: 'star', color: '#E6A23C' }
-    ]
-  }
-  return benefits[currentLevel.value] || benefits[1]
-})
-
-const formatMoney = (amount?: number) => {
-  return (amount || 0).toFixed(2)
-}
-
-const loadGrowthData = () => {
-  // Mock data
-  growthHistory.value = [
-    { id: 1, type: '消费奖励', date: '2026-03-25', value: 298, action: 'add' },
-    { id: 2, type: '评价奖励', date: '2026-03-20', value: 50, action: 'add' },
-    { id: 3, type: '护理计划完成', date: '2026-03-15', value: 200, action: 'add' },
-    { id: 4, type: '消费奖励', date: '2026-03-10', value: 198, action: 'add' },
-    { id: 5, type: '签到奖励', date: '2026-03-05', value: 10, action: 'add' }
-  ]
-}
+const growthHistory = ref([
+  { id: 1, icon: '🛒', action: '消费订单', time: '2026-03-25 14:30', value: 298, type: 'plus' },
+  { id: 2, icon: '📝', action: '完善资料', time: '2026-03-20 10:00', value: 50, type: 'plus' },
+  { id: 3, icon: '⭐', action: '完成护理计划', time: '2026-03-15 16:00', value: 100, type: 'plus' },
+  { id: 4, icon: '🎁', action: '邀请好友', time: '2026-03-10 09:00', value: 200, type: 'plus' }
+])
 
 onMounted(() => {
-  loadGrowthData()
+  // Load real data
 })
 </script>
 
@@ -193,153 +155,69 @@ onMounted(() => {
   padding: 20rpx;
 }
 
-.member-card {
-  margin-bottom: 20rpx;
-}
-
-.card-bg {
+.page-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 24rpx;
-  padding: 40rpx 30rpx;
-}
-
-.member-info {
-  display: flex;
-  align-items: center;
-  gap: 30rpx;
-  margin-bottom: 40rpx;
-}
-
-.info-text {
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-}
-
-.member-name {
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #fff;
-}
-
-.member-level {
-  font-size: 28rpx;
-  color: rgba(255,255,255,0.9);
-  background: rgba(255,255,255,0.2);
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
-  display: inline-block;
-}
-
-.card-stats {
-  display: flex;
-  justify-content: space-around;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #fff;
-  display: block;
-}
-
-.stat-label {
-  font-size: 24rpx;
-  color: rgba(255,255,255,0.7);
-  display: block;
-  margin-top: 8rpx;
-}
-
-.level-progress {
-  background: #fff;
   border-radius: 16rpx;
-  padding: 30rpx;
+  padding: 40rpx 30rpx;
   margin-bottom: 20rpx;
 }
 
-.progress-header {
-  margin-bottom: 30rpx;
-}
-
-.title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  display: block;
-}
-
-.subtitle {
-  font-size: 24rpx;
-  color: #999;
-  display: block;
-  margin-top: 8rpx;
-}
-
-.level-track {
+.level-badge {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-}
-
-.level-dot {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-}
-
-.dot {
-  width: 20rpx;
-  height: 20rpx;
-  border-radius: 50%;
-  background: #ddd;
-  margin-bottom: 10rpx;
-}
-
-.level-dot.active .dot {
-  background: #667eea;
-}
-
-.level-dot.current .dot {
-  width: 28rpx;
-  height: 28rpx;
-  background: #667eea;
-  box-shadow: 0 0 10rpx rgba(102, 126, 234, 0.5);
+  gap: 15rpx;
+  margin-bottom: 20rpx;
 }
 
 .level-name {
-  font-size: 20rpx;
-  color: #999;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #fff;
 }
 
-.level-dot.active .level-name {
-  color: #667eea;
+.level-icon {
+  font-size: 40rpx;
+}
+
+.level-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #fff;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.level-progress {
+  margin-top: 10rpx;
 }
 
 .progress-bar {
-  height: 12rpx;
-  background: #eee;
-  border-radius: 6rpx;
+  height: 16rpx;
+  background: rgba(255,255,255,0.3);
+  border-radius: 8rpx;
   overflow: hidden;
+  margin-bottom: 10rpx;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  border-radius: 6rpx;
+  background: #ffd700;
+  border-radius: 8rpx;
 }
 
-.benefits-section, .history-section, .upgrade-tips {
+.progress-text {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.8);
+}
+
+.benefits-card, .levels-card, .tips-card, .history-card {
   background: #fff;
   border-radius: 16rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
 }
 
-.section-title {
+.card-title {
   font-size: 32rpx;
   font-weight: bold;
   color: #333;
@@ -350,10 +228,24 @@ onMounted(() => {
 .benefits-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 15rpx;
 }
 
 .benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.level-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.level-item {
   display: flex;
   align-items: center;
   gap: 20rpx;
@@ -362,49 +254,120 @@ onMounted(() => {
   border-radius: 12rpx;
 }
 
-.benefit-info {
+.level-item.active {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+}
+
+.level-item.locked {
+  opacity: 0.6;
+}
+
+.level-icon-wrapper {
+  width: 60rpx;
+  height: 60rpx;
+  background: #fff;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-emoji {
+  font-size: 36rpx;
+}
+
+.level-info-text {
   flex: 1;
 }
 
-.benefit-name {
+.level-info-text .level-name {
   font-size: 28rpx;
-  font-weight: bold;
   color: #333;
-  display: block;
+  font-weight: bold;
 }
 
-.benefit-desc {
+.level-requirement {
   font-size: 24rpx;
   color: #999;
-  display: block;
-  margin-top: 6rpx;
 }
 
-.history-list {
-  display: flex;
-  flex-direction: column;
+.current-tag {
+  font-size: 22rpx;
+  background: #667eea;
+  color: #fff;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
 }
 
-.history-item {
+.tip-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 20rpx;
   padding: 20rpx 0;
   border-bottom: 1rpx solid #f5f5f5;
 }
 
-.history-left {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
+.tip-item:last-child {
+  border-bottom: none;
 }
 
-.history-type {
+.tip-icon {
+  font-size: 36rpx;
+}
+
+.tip-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5rpx;
+}
+
+.tip-title {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.tip-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-icon {
+  width: 60rpx;
+  height: 60rpx;
+  background: #f5f5f5;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5rpx;
+}
+
+.history-title {
   font-size: 28rpx;
   color: #333;
 }
 
-.history-date {
+.history-time {
   font-size: 24rpx;
   color: #999;
 }
@@ -414,46 +377,17 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.history-value.add {
+.history-value.plus {
   color: #67C23A;
 }
 
-.history-value.sub {
-  color: #F56C6C;
+.history-value.minus {
+  color: #ff4d4f;
 }
 
-.empty-benefits, .empty-history {
+.empty-tip {
   text-align: center;
   padding: 40rpx;
   color: #999;
-}
-
-.upgrade-tips {
-  background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);
-}
-
-.tips-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  display: block;
-  margin-bottom: 20rpx;
-}
-
-.tips-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.tip-item {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.tip-item text {
-  font-size: 26rpx;
-  color: #666;
 }
 </style>
