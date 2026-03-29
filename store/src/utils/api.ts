@@ -78,7 +78,17 @@ export const api = {
   getOrders: (params?: any) =>
     request({ url: '/orders', data: params }),
   completeOrder: (id: number) =>
-    request({ url: `/orders/${id}/complete`, method: 'PUT' })
+    request({ url: `/orders/${id}/complete`, method: 'PUT' }),
+  
+  // Performance
+  getRealtimePerformance: (employeeId: number) =>
+    request({ url: `/performance/technician/${employeeId}/realtime` }),
+  getPerformance: (employeeId: number, month?: string) =>
+    request({ url: `/performance/technician/${employeeId}`, data: month ? { month } : {} }),
+  getBonusRules: (storeId?: number) =>
+    request({ url: '/performance/bonus-rules', data: storeId ? { storeId } : {} }),
+  getTechnicianBonus: (technicianId: number, month: string) =>
+    request({ url: `/performance/bonus/${technicianId}/${month}` })
 }
 
 export default api

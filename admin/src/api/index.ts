@@ -93,3 +93,12 @@ export const ordersApi = {
   complete: (id: number) => api.put(`/orders/${id}/complete`),
   cancel: (id: number) => api.put(`/orders/${id}/cancel`)
 }
+
+// Bonus Rule APIs
+export const bonusRulesApi = {
+  list: (storeId?: number) => api.get('/performance/bonus-rules', { params: { storeId } }),
+  get: (id: number) => api.get(`/performance/bonus-rules/${id}`),
+  create: (data: any) => api.post('/performance/bonus-rules', data),
+  update: (id: number, data: any) => api.put(`/performance/bonus-rules/${id}`, data),
+  delete: (id: number) => api.delete(`/performance/bonus-rules/${id}`)
+}

@@ -39,6 +39,10 @@
           <el-icon><List /></el-icon>
           <span>订单管理</span>
         </el-menu-item>
+        <el-menu-item index="/bonus-rules">
+          <el-icon><Coin /></el-icon>
+          <span>奖金规则</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

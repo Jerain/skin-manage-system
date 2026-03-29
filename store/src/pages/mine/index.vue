@@ -44,6 +44,14 @@
         <u-icon name="arrow-right" size="16" color="#999" />
       </view>
       
+      <view class="menu-item" @click="goToPerformance">
+        <view class="menu-left">
+          <u-icon name="trending-up" size="22" color="#f5576c" />
+          <text class="menu-text">我的业绩</text>
+        </view>
+        <u-icon name="arrow-right" size="16" color="#999" />
+      </view>
+      
       <view class="menu-item logout" @click="handleLogout" v-if="isLoggedIn">
         <view class="menu-left">
           <u-icon name="close-circle" size="22" />
@@ -94,6 +102,10 @@ const goToAppointments = () => {
 
 const goToCustomers = () => {
   uni.navigateTo({ url: '/pages/customers/index' })
+}
+
+const goToPerformance = () => {
+  uni.navigateTo({ url: '/pages/performance/index' })
 }
 
 const handleLogout = () => {
