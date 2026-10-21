@@ -76,6 +76,14 @@
         <u-icon name="arrow-right" size="16" color="#999" />
       </view>
       
+      <view class="menu-item" @click="goToSkinComparison">
+        <view class="menu-left">
+          <u-icon name="photo" size="22" color="#409EFF" />
+          <text class="menu-text">肤质对比</text>
+        </view>
+        <u-icon name="arrow-right" size="16" color="#999" />
+      </view>
+      
       <view class="menu-item" @click="goToMembership">
         <view class="menu-left">
           <u-icon name="star" size="22" color="#E6A23C" />
@@ -83,6 +91,7 @@
         </view>
         <u-icon name="arrow-right" size="16" color="#999" />
       </view>
+      
       
       <view class="menu-item" @click="editProfile">
         <view class="menu-left">
@@ -142,9 +151,14 @@ const goToCarePlan = () => {
   uni.navigateTo({ url: '/pages/care-plan/index' })
 }
 
+const goToSkinComparison = () => {
+  uni.navigateTo({ url: '/pages/skin-comparison/index' })
+}
+
 const goToMembership = () => {
   uni.navigateTo({ url: '/pages/membership/index' })
 }
+
 
 const editProfile = () => {
   uni.showToast({ title: '个人资料编辑开发中', icon: 'none' })

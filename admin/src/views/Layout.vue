@@ -43,6 +43,14 @@
           <el-icon><Coin /></el-icon>
           <span>奖金规则</span>
         </el-menu-item>
+        <el-menu-item index="/member-levels">
+          <el-icon><Medal /></el-icon>
+          <span>会员等级</span>
+        </el-menu-item>
+        <el-menu-item index="/member-levels">
+          <el-icon><Medal /></el-icon>
+          <span>会员等级</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

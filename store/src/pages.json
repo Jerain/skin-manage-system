@@ -47,6 +47,12 @@
       "style": {
         "navigationBarTitleText": "我的业绩"
       }
+    },
+    {
+      "path": "pages/skin-record/index",
+      "style": {
+        "navigationBarTitleText": "肤质记录上传"
+      }
     }
   ],
   "globalStyle": {

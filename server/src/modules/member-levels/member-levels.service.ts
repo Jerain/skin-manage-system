@@ -21,6 +21,52 @@ export class MemberLevelsService {
     return this.memberLevelRepo.find({ order: { threshold: 'ASC' } });
   }
 
+  /** F004-8：新增会员等级 */
+  async createLevel(data: {
+    levelName: string;
+    levelCode: string;
+    threshold?: number;
+    discount?: number;
+    pointsRate?: number;
+    priorityBooking?: number;
+    exclusiveTechnician?: number;
+  }) {
+    const level = this.memberLevelRepo.create({
+      levelName: data.levelName,
+      levelCode: data.levelCode,
+      threshold: data.threshold ?? 0,
+      discount: data.discount ?? 1,
+      pointsRate: data.pointsRate ?? 1,
+      priorityBooking: data.priorityBooking ?? 0,
+      exclusiveTechnician: data.exclusiveTechnician ?? 0,
+    });
+    return this.memberLevelRepo.save(level);
+  }
+
+  /** F004-8：更新会员等级 */
+  async updateLevel(id: number, data: Partial<MemberLevel>) {
+    const level = await this.memberLevelRepo.findOne({ where: { id } });
+    if (!level) {
+      return { code: 404, message: '会员等级不存在' };
+    }
+    Object.assign(level, data);
+    return this.memberLevelRepo.save(level);
+  }
+
+  /** F004-8：删除会员等级（有客户归属时不允许删除） */
+  async deleteLevel(id: number) {
+    const level = await this.memberLevelRepo.findOne({ where: { id } });
+    if (!level) {
+      return { code: 404, message: '会员等级不存在' };
+    }
+    const usedCount = await this.customerLevelRepo.count({ where: { levelId: id } });
+    if (usedCount > 0) {
+      return { code: 400, message: `该等级下还有 ${usedCount} 位客户，无法删除` };
+    }
+    await this.memberLevelRepo.remove(level);
+    return { code: 0, message: '删除成功' };
+  }
+
   // Get customer level info
   async getCustomerLevel(customerId: number) {
     let customerLevel = await this.customerLevelRepo.findOne({ where: { customerId } });

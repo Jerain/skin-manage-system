@@ -99,7 +99,7 @@
           <el-form-item label="触发条件" prop="condition">
             <el-input v-model="form.condition" type="textarea" placeholder="如：新客户首单" />
           </el-form-item>
-        </el-form-item>
+        </template>
         
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="2" placeholder="请输入描述" />

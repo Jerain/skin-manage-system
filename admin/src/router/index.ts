@@ -80,6 +80,18 @@ const routes: RouteRecordRaw[] = [
         name: 'BonusRules',
         component: () => import('@/views/BonusRules.vue'),
         meta: { title: '奖金规则配置' }
+      },
+      {
+        path: 'member-levels',
+        name: 'MemberLevels',
+        component: () => import('@/views/MemberLevels.vue'),
+        meta: { title: '会员等级配置' }
+      },
+      {
+        path: 'member-levels',
+        name: 'MemberLevels',
+        component: () => import('@/views/MemberLevels.vue'),
+        meta: { title: '会员等级配置' }
       }
     ]
   }

@@ -52,6 +52,14 @@
         <u-icon name="arrow-right" size="16" color="#999" />
       </view>
       
+      <view class="menu-item" @click="goToSkinRecord">
+        <view class="menu-left">
+          <u-icon name="camera" size="22" color="#409eff" />
+          <text class="menu-text">肤质记录上传</text>
+        </view>
+        <u-icon name="arrow-right" size="16" color="#999" />
+      </view>
+      
       <view class="menu-item logout" @click="handleLogout" v-if="isLoggedIn">
         <view class="menu-left">
           <u-icon name="close-circle" size="22" />
@@ -106,6 +114,10 @@ const goToCustomers = () => {
 
 const goToPerformance = () => {
   uni.navigateTo({ url: '/pages/performance/index' })
+}
+
+const goToSkinRecord = () => {
+  uni.navigateTo({ url: '/pages/skin-record/index' })
 }
 
 const handleLogout = () => {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { MemberLevelsService } from './member-levels.service';
 
 @Controller()
@@ -8,6 +8,24 @@ export class MemberLevelsController {
   @Get('member-levels')
   getAllLevels() {
     return this.memberLevelsService.findAllLevels();
+  }
+
+  /** F004-8：新增会员等级 */
+  @Post('member-levels')
+  createLevel(@Body() data: any) {
+    return this.memberLevelsService.createLevel(data);
+  }
+
+  /** F004-8：更新会员等级 */
+  @Put('member-levels/:id')
+  updateLevel(@Param('id') id: string, @Body() data: any) {
+    return this.memberLevelsService.updateLevel(Number(id), data);
+  }
+
+  /** F004-8：删除会员等级 */
+  @Delete('member-levels/:id')
+  deleteLevel(@Param('id') id: string) {
+    return this.memberLevelsService.deleteLevel(Number(id));
   }
 
   @Get('customer-level/:customerId')

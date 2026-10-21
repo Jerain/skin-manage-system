@@ -13,6 +13,8 @@ import { PerformanceModule } from './modules/performance/performance.module';
 import { SkinRecordsModule } from './modules/skin-records/skin-records.module';
 import { CarePlansModule } from './modules/care-plans/care-plans.module';
 import { MemberLevelsModule } from './modules/member-levels/member-levels.module';
+import { MemberCardsModule } from './modules/member-cards/member-cards.module';
+import { SmsModule } from './modules/sms/sms.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 
 @Module({
@@ -41,6 +43,8 @@ import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
     SkinRecordsModule,
     CarePlansModule,
     MemberLevelsModule,
+    MemberCardsModule,
+    SmsModule,
     AiAssistantModule,
   ],
 })

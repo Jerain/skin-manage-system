@@ -1,4 +1,15 @@
 const BASE_URL = 'http://localhost:3000/api'
+/** 静态资源（上传照片、生成对比图）根地址 */
+export const STATIC_BASE_URL = 'http://localhost:3000'
+
+/**
+ * 把相对路径（如 /static/uploads/xxx.jpg）补全为可访问的绝对地址
+ */
+export const resolveImageUrl = (url?: string | null): string => {
+  if (!url) return ''
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) return url
+  return STATIC_BASE_URL + (url.startsWith('/') ? url : '/' + url)
+}
 
 interface RequestOptions {
   url: string
@@ -96,7 +107,25 @@ export const api = {
   getCarePlans: () => request({ url: '/care-plans' }),
   getCarePlan: (id: number) => request({ url: `/care-plans/${id}` }),
   createCarePlan: (data: any) => request({ url: '/care-plans', method: 'POST', data }),
-  updateCarePlanItem: (itemId: number, data: any) => request({ url: `/care-plans/items/${itemId}`, method: 'PUT', data })
+  updateCarePlanItem: (itemId: number, data: any) => request({ url: `/care-plans/items/${itemId}`, method: 'PUT', data }),
+  
+  // Skin Comparisons (F001-6)
+  getSkinComparisons: (customerId: number) =>
+    request({ url: `/skin-comparisons/${customerId}` }),
+  getSkinComparison: (id: number) =>
+    request({ url: `/skin-comparisons/detail/${id}` }),
+  getSkinRecords: (customerId: number) =>
+    request({ url: `/skin-records/customer/${customerId}` }),
+  
+  // Care Plan Reminders (F003-5)
+  getCarePlanReminders: (customerId: number) =>
+    request({ url: `/care-plan-reminders/customer/${customerId}` }),
+  readCarePlanReminder: (id: number) =>
+    request({ url: `/care-plan-reminders/${id}/read`, method: 'POST' }),
+  
+  // Member Cards (BUG-103)
+  getMemberCards: (customerId?: number) =>
+    request({ url: '/member-cards', data: customerId ? { customerId } : {} })
 }
 
 export default api

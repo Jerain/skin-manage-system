@@ -102,3 +102,11 @@ export const bonusRulesApi = {
   update: (id: number, data: any) => api.put(`/performance/bonus-rules/${id}`, data),
   delete: (id: number) => api.delete(`/performance/bonus-rules/${id}`)
 }
+
+// Member Level APIs (F004-8)
+export const memberLevelsApi = {
+  list: () => api.get('/member-levels'),
+  create: (data: any) => api.post('/member-levels', data),
+  update: (id: number, data: any) => api.put(`/member-levels/${id}`, data),
+  delete: (id: number) => api.delete(`/member-levels/${id}`)
+}

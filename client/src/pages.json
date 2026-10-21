@@ -59,6 +59,12 @@
       "style": {
         "navigationBarTitleText": "会员中心"
       }
+    },
+    {
+      "path": "pages/skin-comparison/index",
+      "style": {
+        "navigationBarTitleText": "肤质对比"
+      }
     }
   ],
   "globalStyle": {
