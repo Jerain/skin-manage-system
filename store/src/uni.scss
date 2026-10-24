@@ -1,0 +1,4 @@
+/* 全局 SCSS 变量（uni-app 约定：src/uni.scss 会被自动注入到每个组件的 <style lang="scss">） */
+
+/* uview-plus 主题变量（需在所有用到 uview-plus 组件的页面样式之前引入） */
+@import 'uview-plus/theme.scss';

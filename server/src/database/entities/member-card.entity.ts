@@ -1,24 +1,28 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 
+/**
+ * 会员卡（BUG-103）
+ * 列名与项目其他新表保持一致（camelCase，由实体属性名直接映射）
+ */
 @Entity('member_cards')
 export class MemberCard {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Index()
-  @Column({ name: 'customer_id' })
+  @Column()
   customerId: number;
 
-  @Column({ name: 'card_name', length: 100, nullable: true })
+  @Column({ length: 100, nullable: true })
   cardName: string;
 
-  @Column({ name: 'card_type', length: 20, default: 'times' })
+  @Column({ length: 20, default: 'times' })
   cardType: string;
 
-  @Column({ name: 'total_times', type: 'int', default: 0 })
+  @Column({ type: 'int', default: 0 })
   totalTimes: number;
 
-  @Column({ name: 'used_times', type: 'int', default: 0 })
+  @Column({ type: 'int', default: 0 })
   usedTimes: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
@@ -27,7 +31,7 @@ export class MemberCard {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   balance: number;
 
-  @Column({ name: 'expired_at', type: 'date', nullable: true })
+  @Column({ type: 'date', nullable: true })
   expiredAt: string;
 
   @Column({ length: 20, default: 'active' })

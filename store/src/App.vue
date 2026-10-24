@@ -39,7 +39,9 @@ const tabChange = (index: number) => {
 }
 </script>
 
-<style>
+<style lang="scss">
+@import 'uview-plus/index.scss';
+
 page {
   background-color: #f5f5f5;
 }

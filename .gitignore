@@ -5,3 +5,5 @@ dist/
 .env
 *.env.backup
 sync-tmp.ts
+*.tmp.ts
+.mysqldata/

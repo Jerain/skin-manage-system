@@ -1,7 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('customer_levels')
-@Index(['customerId'])
 export class CustomerLevel {
   @PrimaryGeneratedColumn()
   id: number;

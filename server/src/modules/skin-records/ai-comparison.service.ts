@@ -4,9 +4,12 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 
 const SILICONFLOW_BASE_URL = 'https://api.siliconflow.cn/v1';
-const SILICONFLOW_API_KEY =
-  process.env.SILICONFLOW_API_KEY ||
-  'sk-wvhempqablosakqfaelzkwjgdatgjmrhvsyrttwxgthjgbhr';
+
+/**
+ * API Key 只从环境变量读取 —— 禁止在源码里写兜底值。
+ * 密钥一旦进代码库等于白送（见 f001-comparison-spec.md §2.3）。
+ */
+const SILICONFLOW_API_KEY = (process.env.SILICONFLOW_API_KEY || '').trim();
 
 /** 视觉理解模型：分析护理前后肤质差异 */
 const VISION_MODEL = process.env.SILICONFLOW_VISION_MODEL || 'Qwen/Qwen3-VL-8B-Instruct';
@@ -14,6 +17,16 @@ const VISION_MODEL = process.env.SILICONFLOW_VISION_MODEL || 'Qwen/Qwen3-VL-8B-I
 const IMAGE_MODEL = process.env.SILICONFLOW_IMAGE_MODEL || 'Qwen/Qwen-Image';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'public/uploads');
+
+/** 对比图输出规格（f001-comparison-spec.md §4.2） */
+const COMPARE_WIDTH = parseInt(process.env.COMPARE_IMAGE_WIDTH || '1080', 10);
+const COMPARE_HEIGHT = parseInt(process.env.COMPARE_IMAGE_HEIGHT || '1440', 10);
+const COMPARE_QUALITY = parseInt(process.env.COMPARE_IMAGE_QUALITY || '85', 10);
+/** 体积上限 300KB */
+const COMPARE_MAX_BYTES = parseInt(process.env.COMPARE_IMAGE_MAX_KB || '300', 10) * 1024;
+
+/** 文生图兜底必须打的水印（合规红线） */
+const AI_WATERMARK_TEXT = process.env.AI_WATERMARK_TEXT || 'AI 示意图 · 非实拍';
 
 /**
  * AI 对比图服务
@@ -35,6 +48,30 @@ export class AiComparisonService {
     timeout: 120000,
     headers: { 'Content-Type': 'application/json' },
   });
+
+  /**
+   * 校验 SiliconFlow 凭证是否配置
+   * 未配置时直接抛错，由调用方降级处理（记录照常保存，不阻断技师流程）
+   */
+  private ensureApiKey(): void {
+    if (!SILICONFLOW_API_KEY) {
+      throw new Error(
+        'SILICONFLOW_API_KEY 未配置：请在 server/.env 中设置该环境变量（不要把密钥写进源码）',
+      );
+    }
+  }
+
+  /**
+   * 带 Authorization 头的请求（密钥只在运行时从环境变量注入）
+   */
+  private async postWithAuth(url: string, body: any, timeout = 120000): Promise<any> {
+    this.ensureApiKey();
+    const res = await this.http.post(url, body, {
+      timeout,
+      headers: { Authorization: `Bearer ${SILICONFLOW_API_KEY}` },
+    });
+    return res.data;
+  }
 
   /**
    * 读取图片为 base64 data URL
@@ -162,7 +199,7 @@ export class AiComparisonService {
     }
 
     try {
-      const res: any = await this.http.post('/chat/completions', {
+      const res: any = await this.postWithAuth('/chat/completions', {
         model: VISION_MODEL,
         messages: [{ role: 'user', content }],
         temperature: 0.4,
@@ -222,7 +259,7 @@ export class AiComparisonService {
     ].join('\n');
 
     try {
-      const res: any = await this.http.post('/chat/completions', {
+      const res: any = await this.postWithAuth('/chat/completions', {
         model: VISION_MODEL,
         messages: [
           {
@@ -282,6 +319,10 @@ export class AiComparisonService {
 
   /**
    * 使用 sharp 将前后照片拼成左右对比图，保存到 public/uploads
+   *
+   * 规格（f001-comparison-spec.md §4.2）：
+   *   - 1080 × 1440（3:4 竖版），JPEG 质量 85，≤ 300KB
+   *   - 真实照片像素级拼接，绝不用文生图改造人脸
    */
   private async composeComparison(
     beforeImageUrl?: string,
@@ -296,13 +337,17 @@ export class AiComparisonService {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const sharp = require('sharp');
 
-      const WIDTH = 900;
-      const HEIGHT = 1200;
-      const LABEL_HEIGHT = 56;
+      // 画布 1080×1440，左右各半（540×1440）
+      const CANVAS_W = COMPARE_WIDTH;
+      const CANVAS_H = COMPARE_HEIGHT;
+      const PANEL_W = Math.floor(CANVAS_W / 2);
+      const LABEL_HEIGHT = 72;
+      const DIVIDER = 4;
 
+      // position: attention —— 尽量保留人脸主体，避免固定裁切
       const resize = async (buf: Buffer) =>
         sharp(buf)
-          .resize(WIDTH, HEIGHT, { fit: 'cover', position: 'centre' })
+          .resize(PANEL_W, CANVAS_H, { fit: 'cover', position: 'attention' })
           .toBuffer();
 
       const beforeImg = beforeBuf ? await resize(beforeBuf) : null;
@@ -312,10 +357,10 @@ export class AiComparisonService {
       const right = afterImg || beforeImg!;
 
       const svgLeft = Buffer.from(
-        `<svg width="${WIDTH}" height="${LABEL_HEIGHT}"><rect width="100%" height="100%" fill="rgba(0,0,0,0.55)"/><text x="24" y="38" font-size="28" fill="#ffffff" font-family="sans-serif">护理前</text></svg>`,
+        `<svg width="${PANEL_W}" height="${LABEL_HEIGHT}"><rect width="100%" height="100%" fill="rgba(0,0,0,0.55)"/><text x="28" y="50" font-size="40" fill="#ffffff" font-family="sans-serif">护理前</text></svg>`,
       );
       const svgRight = Buffer.from(
-        `<svg width="${WIDTH}" height="${LABEL_HEIGHT}"><rect width="100%" height="100%" fill="rgba(0,0,0,0.55)"/><text x="24" y="38" font-size="28" fill="#ffffff" font-family="sans-serif">护理后</text></svg>`,
+        `<svg width="${PANEL_W}" height="${LABEL_HEIGHT}"><rect width="100%" height="100%" fill="rgba(0,0,0,0.55)"/><text x="28" y="50" font-size="40" fill="#ffffff" font-family="sans-serif">护理后</text></svg>`,
       );
 
       const leftPanel = await sharp(left)
@@ -325,29 +370,101 @@ export class AiComparisonService {
         .composite([{ input: svgRight, top: 0, left: 0 }])
         .toBuffer();
 
-      const output = await sharp({
-        create: {
-          width: WIDTH * 2,
-          height: HEIGHT,
-          channels: 3,
-          background: { r: 255, g: 255, b: 255 },
-        },
-      })
-        .composite([
-          { input: leftPanel, top: 0, left: 0 },
-          { input: rightPanel, top: 0, left: WIDTH },
-        ])
-        .jpeg({ quality: 88 })
-        .toBuffer();
+      const build = (quality: number) =>
+        sharp({
+          create: {
+            width: CANVAS_W,
+            height: CANVAS_H,
+            channels: 3,
+            background: { r: 255, g: 255, b: 255 },
+          },
+        })
+          .composite([
+            { input: leftPanel, top: 0, left: 0 },
+            { input: rightPanel, top: 0, left: PANEL_W },
+            {
+              // 中缝分隔线
+              input: Buffer.from(
+                `<svg width="${DIVIDER}" height="${CANVAS_H}"><rect width="100%" height="100%" fill="#ffffff"/></svg>`,
+              ),
+              top: 0,
+              left: PANEL_W - Math.floor(DIVIDER / 2),
+            },
+          ])
+          .jpeg({ quality, mozjpeg: true })
+          .toBuffer();
+
+      // 质量阶梯压缩，确保 ≤ 300KB
+      const output = await this.fitUnderSizeLimit(build);
 
       await fs.mkdir(UPLOAD_DIR, { recursive: true });
       const filename = `comparison_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
       await fs.writeFile(path.join(UPLOAD_DIR, filename), output);
 
+      this.logger.log(
+        `对比图已生成: ${filename} ${(output.length / 1024).toFixed(1)}KB (上限 ${(COMPARE_MAX_BYTES / 1024).toFixed(0)}KB)`,
+      );
       return `/static/uploads/${filename}`;
     } catch (e: any) {
       this.logger.error(`对比图拼接失败: ${e.message}`);
       return null;
+    }
+  }
+
+  /**
+   * 保证输出体积 ≤ 上限：依次降质量，仍超标则用最小质量的版本
+   */
+  private async fitUnderSizeLimit(
+    build: (quality: number) => Promise<Buffer>,
+  ): Promise<Buffer> {
+    const qualities = [COMPARE_QUALITY, 80, 72, 65, 58, 50];
+    let best: Buffer | null = null;
+
+    for (const q of qualities) {
+      const buf = await build(q);
+      if (!best || buf.length < best.length) best = buf;
+      if (buf.length <= COMPARE_MAX_BYTES) return buf;
+    }
+
+    this.logger.warn(
+      `对比图体积 ${(best!.length / 1024).toFixed(1)}KB 仍超过上限 ${(COMPARE_MAX_BYTES / 1024).toFixed(0)}KB`,
+    );
+    return best!;
+  }
+
+  /**
+   * 给图片打上「AI 示意图 · 非实拍」水印
+   * 文生图兜底路径的合规硬要求（f001-comparison-spec.md §2.2）
+   */
+  private async applyWatermark(input: Buffer): Promise<Buffer> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const sharp = require('sharp');
+      const meta = await sharp(input).metadata();
+      const w = meta.width || 1024;
+      const h = meta.height || 1024;
+
+      const fontSize = Math.max(20, Math.round(w / 28));
+      const boxH = Math.round(fontSize * 2.1);
+      const boxW = Math.round(w * 0.62);
+      const boxX = Math.round((w - boxW) / 2);
+      const boxY = h - boxH - Math.round(h * 0.03);
+
+      const svg = Buffer.from(
+        `<svg width="${w}" height="${h}">` +
+          `<rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="10" fill="rgba(0,0,0,0.62)"/>` +
+          `<text x="${w / 2}" y="${boxY + boxH * 0.68}" font-size="${fontSize}" fill="#ffffff" ` +
+          `font-family="sans-serif" text-anchor="middle">${AI_WATERMARK_TEXT}</text>` +
+          `</svg>`,
+      );
+
+      return await sharp(input)
+        .composite([{ input: svg, top: 0, left: 0 }])
+        .jpeg({ quality: 85 })
+        .toBuffer();
+    } catch (e: any) {
+      this.logger.error(`水印叠加失败: ${e.message}`);
+      return input;
     }
   }
 
@@ -366,7 +483,7 @@ export class AiComparisonService {
       .join('\n');
 
     try {
-      const res: any = await this.http.post('/images/generations', {
+      const res: any = await this.postWithAuth('/images/generations', {
         model: IMAGE_MODEL,
         prompt,
         image_size: '1024x576',
@@ -380,16 +497,20 @@ export class AiComparisonService {
       try {
         const buf = await this.readImageBuffer(url);
         if (buf) {
+          // 合规红线：文生图兜底必须打「AI 示意图 · 非实拍」水印
+          const watermarked = await this.applyWatermark(buf);
           await fs.mkdir(UPLOAD_DIR, { recursive: true });
-          const filename = `comparison_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
-          await fs.writeFile(path.join(UPLOAD_DIR, filename), buf);
+          const filename = `comparison_ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+          await fs.writeFile(path.join(UPLOAD_DIR, filename), watermarked);
           return `/static/uploads/${filename}`;
         }
       } catch (e: any) {
         this.logger.warn(`生成图转存失败，返回原始链接: ${e.message}`);
       }
 
-      return url;
+      // 转存失败时也不能裸奔返回第三方链接（无水印）——返回 null 走站内消息兜底
+      this.logger.warn('文生图兜底转存失败，放弃返回未加水印的第三方链接');
+      return null;
     } catch (e: any) {
       const detail = e?.response?.data?.message || e.message;
       this.logger.error(`对比图生成失败: ${detail}`);
