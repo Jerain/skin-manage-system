@@ -18,6 +18,11 @@ export class Customer {
   @Column({ nullable: true })
   password: string;
 
+  /** 微信小程序 openid（订阅消息下发需要） */
+  @Index()
+  @Column({ name: 'openid', length: 64, nullable: true })
+  openid: string;
+
   @Column({ name: 'face_token', nullable: true })
   faceToken: string;
 

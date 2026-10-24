@@ -16,6 +16,7 @@ import { MemberLevelsModule } from './modules/member-levels/member-levels.module
 import { MemberCardsModule } from './modules/member-cards/member-cards.module';
 import { SmsModule } from './modules/sms/sms.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
     MemberCardsModule,
     SmsModule,
     AiAssistantModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
