@@ -125,7 +125,31 @@ export const api = {
   
   // Member Cards (BUG-103)
   getMemberCards: (customerId?: number) =>
-    request({ url: '/member-cards', data: customerId ? { customerId } : {} })
+    request({ url: '/member-cards', data: customerId ? { customerId } : {} }),
+
+  // 站内消息中心（推送兜底通道）
+  getNotifications: (customerId: number, unreadOnly = false, limit = 50) =>
+    request({
+      url: '/notifications',
+      data: { customerId, unreadOnly: unreadOnly ? 'true' : 'false', limit }
+    }),
+  getUnreadCount: (customerId: number) =>
+    request({ url: '/notifications/unread-count', data: { customerId } }),
+  readNotification: (id: number, customerId: number) =>
+    request({ url: `/notifications/${id}/read`, method: 'POST', data: { customerId } }),
+  readAllNotifications: (customerId: number) =>
+    request({ url: '/notifications/read-all', method: 'POST', data: { customerId } }),
+
+  // 微信一次性订阅消息（主通道）
+  getSubscribeConfig: () => request({ url: '/subscriptions/config' }),
+  wechatLogin: (code: string, customerId: number) =>
+    request({ url: '/subscriptions/wechat-login', method: 'POST', data: { code, customerId } }),
+  recordSubscribeGrant: (customerId: number, templateId?: string, count = 1) =>
+    request({
+      url: '/subscriptions/grant',
+      method: 'POST',
+      data: { customerId, templateId, count }
+    })
 }
 
 export default api

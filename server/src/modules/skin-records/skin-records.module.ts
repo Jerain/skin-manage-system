@@ -7,11 +7,13 @@ import { SkinRecordsService } from './skin-records.service';
 import { AiComparisonService } from './ai-comparison.service';
 import { SkinRecord } from '../../database/entities/skin-record.entity';
 import { SkinComparison } from '../../database/entities/skin-comparison.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SkinRecord, SkinComparison]),
     HttpModule,
+    NotificationsModule,
   ],
   controllers: [SkinRecordsController, SkinComparisonsController],
   providers: [SkinRecordsService, AiComparisonService],

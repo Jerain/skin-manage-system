@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { SkinRecord } from '../../database/entities/skin-record.entity';
 import { SkinComparison } from '../../database/entities/skin-comparison.entity';
 import { AiComparisonService } from './ai-comparison.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { WechatSubscribeService } from '../notifications/wechat-subscribe.service';
 
 @Injectable()
 export class SkinRecordsService {
@@ -15,6 +17,8 @@ export class SkinRecordsService {
     @InjectRepository(SkinComparison)
     private skinComparisonRepo: Repository<SkinComparison>,
     private readonly aiComparisonService: AiComparisonService,
+    private readonly notificationsService: NotificationsService,
+    private readonly wechatSubscribeService: WechatSubscribeService,
   ) {}
 
   // 创建肤质记录
@@ -191,13 +195,64 @@ export class SkinRecordsService {
     return comparison;
   }
 
-  /** 推送对比图给客户端 */
+  /**
+   * 推送对比图给客户端（双通道）
+   *
+   * 通道一：微信一次性订阅消息（主）—— 需用户已在「护理完成确认页」授权
+   * 通道二：站内消息（兜底，必做）—— 无论微信通道成功与否都必须落库
+   *
+   * 规格：f001-comparison-spec.md §5.1
+   */
   async pushComparison(id: number) {
     const comparison = await this.skinComparisonRepo.findOne({ where: { id } });
     if (!comparison) throw new NotFoundException('对比记录不存在');
+
+    // 取客户 openid（订阅消息需要）
+    let openid: string | null = null;
+    try {
+      const rows: any[] = await this.skinRecordRepo.manager.query(
+        `SELECT openid FROM customers WHERE id = ?`,
+        [comparison.customerId],
+      );
+      openid = rows?.[0]?.openid || null;
+    } catch (e: any) {
+      this.logger.warn(`读取客户 openid 失败: ${e.message}`);
+    }
+
+    // 通道一：微信订阅消息（失败不阻断）
+    let wechat: { sent: boolean; reason: string } = { sent: false, reason: '未执行' };
+    try {
+      wechat = await this.wechatSubscribeService.sendSkinComparisonReady({
+        customerId: comparison.customerId,
+        openId: openid || '',
+        serviceName: '皮肤护理',
+        highlight: comparison.improvementHighlights || '',
+        link: 'pages/skin-comparison/index',
+      });
+    } catch (e: any) {
+      wechat = { sent: false, reason: e.message };
+    }
+
+    // 通道二：站内消息（必做）
+    await this.notificationsService.create({
+      customerId: comparison.customerId,
+      type: 'skin_comparison',
+      title: '您有一份新的肤质对比报告',
+      summary: comparison.improvementHighlights || '您的护理效果已生成，快来看看变化~',
+      link: '/pages/skin-comparison/index',
+      refId: comparison.id,
+    });
+
     comparison.pushed = 1;
     comparison.pushTime = new Date();
     await this.skinComparisonRepo.save(comparison);
-    return comparison;
+
+    return {
+      ...comparison,
+      pushChannels: {
+        wechatSubscribe: wechat,
+        inAppMessage: { sent: true, reason: '已落站内消息' },
+      },
+    };
   }
 }

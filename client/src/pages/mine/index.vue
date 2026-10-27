@@ -76,6 +76,15 @@
         <u-icon name="arrow-right" size="16" color="#999" />
       </view>
       
+      <view class="menu-item" @click="goToMessages">
+        <view class="menu-left">
+          <u-icon name="chat" size="22" color="#F56C6C" />
+          <text class="menu-text">消息中心</text>
+          <text v-if="unreadCount > 0" class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+        </view>
+        <u-icon name="arrow-right" size="16" color="#999" />
+      </view>
+      
       <view class="menu-item" @click="goToSkinComparison">
         <view class="menu-left">
           <u-icon name="photo" size="22" color="#409EFF" />
@@ -149,6 +158,10 @@ const showMemberCards = () => {
 
 const goToCarePlan = () => {
   uni.navigateTo({ url: '/pages/care-plan/index' })
+}
+
+const goToMessages = () => {
+  uni.navigateTo({ url: '/pages/messages/index' })
 }
 
 const goToSkinComparison = () => {

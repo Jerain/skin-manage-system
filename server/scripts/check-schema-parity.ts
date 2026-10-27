@@ -31,40 +31,43 @@ async function main() {
   await ds.initialize();
 
   const problems: string[] = [];
+  const runner = ds.createQueryRunner();
+  await runner.connect();
 
-  for (const entity of ds.entityMetadatas) {
-    const tableName = entity.tableName;
-    const columns = await ds
-      .createQueryRunner()
-      .getTable(tableName)
-      .then((t) => (t ? t.columns : null));
+  try {
+    for (const entity of ds.entityMetadatas) {
+      const tableName = entity.tableName;
+      const table = await runner.getTable(tableName);
 
-    if (!columns) {
-      problems.push(`表不存在: ${tableName}（实体 ${entity.name}）`);
-      continue;
-    }
-
-    const dbCols = new Map<string, TableColumn>();
-    for (const c of columns) dbCols.set(c.name, c);
-
-    for (const col of entity.columns) {
-      if (col.relationMetadata || col.isVirtual) continue;
-      if (IGNORE_COLUMNS.has(col.databaseName)) continue;
-
-      const dbCol = dbCols.get(col.databaseName);
-      if (!dbCol) {
-        problems.push(`${tableName}.${col.databaseName} 列缺失（实体 ${entity.name} 声明）`);
+      if (!table) {
+        problems.push(`表不存在: ${tableName}（实体 ${entity.name}）`);
         continue;
       }
 
-      const entityNullable = col.isNullable === true;
-      const dbNullable = dbCol.isNullable === true;
-      if (entityNullable !== dbNullable) {
-        problems.push(
-          `${tableName}.${col.databaseName} 可空性不一致：实体 ${entityNullable ? 'NULL' : 'NOT NULL'} / 库 ${dbNullable ? 'NULL' : 'NOT NULL'}`,
-        );
+      const dbCols = new Map<string, TableColumn>();
+      for (const c of table.columns) dbCols.set(c.name, c);
+
+      for (const col of entity.columns) {
+        if (col.relationMetadata || col.isVirtual) continue;
+        if (IGNORE_COLUMNS.has(col.databaseName)) continue;
+
+        const dbCol = dbCols.get(col.databaseName);
+        if (!dbCol) {
+          problems.push(`${tableName}.${col.databaseName} 列缺失（实体 ${entity.name} 声明）`);
+          continue;
+        }
+
+        const entityNullable = col.isNullable === true;
+        const dbNullable = dbCol.isNullable === true;
+        if (entityNullable !== dbNullable) {
+          problems.push(
+            `${tableName}.${col.databaseName} 可空性不一致：实体 ${entityNullable ? 'NULL' : 'NOT NULL'} / 库 ${dbNullable ? 'NULL' : 'NOT NULL'}`,
+          );
+        }
       }
     }
+  } finally {
+    await runner.release();
   }
 
   await ds.destroy();

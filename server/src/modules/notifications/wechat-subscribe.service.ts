@@ -122,6 +122,52 @@ export class WechatSubscribeService {
   }
 
   /**
+   * 小程序 code 换 openid（code2session）
+   * 未配置 appid/secret 时返回 { openid: null, errMsg }
+   */
+  async code2Session(code: string): Promise<{ openid: string | null; errMsg?: string }> {
+    if (!this.appId || !this.appSecret) {
+      return { openid: null, errMsg: '未配置 WECHAT_APPID / WECHAT_APP_SECRET' };
+    }
+    if (!code) {
+      return { openid: null, errMsg: '缺少 code' };
+    }
+    try {
+      const res: any = await axios.get(
+        `${this.apiBase}/sns/jscode2session?appid=${this.appId}&secret=${this.appSecret}&js_code=${code}&grant_type=authorization_code`,
+        { timeout: 15000 },
+      );
+      if (res?.data?.errcode || !res?.data?.openid) {
+        const errMsg = res?.data?.errmsg || 'jscode2session 返回异常';
+        this.logger.warn(`code 换 openid 失败: ${errMsg}`);
+        return { openid: null, errMsg };
+      }
+      return { openid: res.data.openid };
+    } catch (e: any) {
+      const detail = e?.response?.data?.errmsg || e.message;
+      this.logger.error(`code 换 openid 异常: ${detail}`);
+      return { openid: null, errMsg: detail };
+    }
+  }
+
+  /**
+   * 把 openid 绑定到客户记录
+   */
+  async bindOpenid(customerId: number, openid: string): Promise<boolean> {
+    try {
+      await this.notificationRepo.manager.query(
+        `UPDATE customers SET openid = ? WHERE id = ?`,
+        [openid, customerId],
+      );
+      this.logger.log(`客户 ${customerId} 已绑定微信 openid`);
+      return true;
+    } catch (e: any) {
+      this.logger.error(`绑定 openid 失败: ${e.message}`);
+      return false;
+    }
+  }
+
+  /**
    * 下发一次性订阅消息
    * 未配置 / 无授权 / 接口失败时返回 { sent: false, reason }，绝不抛错
    */
