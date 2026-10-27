@@ -11,7 +11,7 @@
 
     <!-- 消息列表 -->
     <view v-if="loading" class="empty">
-      <u-loading mode="circle" color="#409EFF" />
+      <u-loading-icon mode="circle" color="#409EFF" />
     </view>
 
     <view v-else-if="!messages.length" class="empty">
